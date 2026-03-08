@@ -642,13 +642,20 @@ export function fireEngineMaxReasonableTime(
   } else if (engine === "playwright") {
     return (meta.options.waitFor ?? 0) + 30000;
   } else {
+    // Count click actions to account for injected post-click waits
+    const clickCount = (meta.options.actions ?? []).filter(
+      action => action.type === "click",
+    ).length;
+    const injectedClickWaitTime = clickCount * CLICK_ACTION_DEFAULT_WAIT_MS;
+
     return (
       effectiveWait +
       (meta.options.actions?.reduce(
         (a, x) => (x.type === "wait" ? (x.milliseconds ?? 2500) + a : 250 + a),
         0,
       ) ?? 0) +
-      30000
+      30000 +
+      injectedClickWaitTime
     );
   }
 }
